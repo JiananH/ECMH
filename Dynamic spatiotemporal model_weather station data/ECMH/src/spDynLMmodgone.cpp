@@ -256,9 +256,6 @@ extern "C" {
     F77_NAME(dpotri)(lower, &p, SigmaEtaIW_S, &p, &info); if(info != 0){error("c++ error: dpotri failed 2.01\n");}
 
     if(verbose){
-      // Rprintf("-------------------------------------------------\n");
-      // Rprintf("\t\tSampling\n");
-      // Rprintf("-------------------------------------------------\n");
       #ifdef Win32
         R_FlushConsole();
       #endif
@@ -280,32 +277,16 @@ extern "C" {
       F77_NAME(dpotrf)(lower, &p, tmp_pp, &p, &info); if(info != 0){error("c++ error: dpotrf2 failed\n");}
       F77_NAME(dpotri)(lower, &p, tmp_pp, &p, &info); if(info != 0){error("c++ error: dpotri failed\n");}
 
-      // Rprintf("%i th sample-------------------------------------------\n",s);
-      // Rprintf("\t covariance matrix tmp_pp:"); printVec(tmp_pp,pp);
-
       //mu_Beta0
 
       F77_NAME(dsymv)(lower, &p, &one, sigma0, &p, m0, &incOne, &zero, tmp_p, &incOne);
       F77_NAME(dsymv)(lower, &p, &one, sigmaEta, &p, beta, &incOne, &one, tmp_p, &incOne);//first column of beta is Beta_1
       F77_NAME(dsymv)(lower, &p, &one, tmp_pp, &p, tmp_p, &incOne, &zero, tmp_p2, &incOne);
 
-      // Rprintf("-------------------------------------------------\n");
-      // Rprintf("\tmean vector tmp_p2:"); printVec(tmp_p2,p);
-
-      /////
-
-      // Rprintf("\tcovariance matrix tmp_pp:"); printVec(tmp_pp,pp);
 
      F77_NAME(dpotrf)(lower, &p, tmp_pp, &p, &info); if(info != 0){error("c++ error: dpotrf3 failed\n");}
-     // Rprintf("dpotrf on tmp_pp-------------------------------------\n");
-     // Rprintf("\tsqrt of covariance matrix tmp_pp:"); printVec(tmp_pp,pp);
 
-     // double *tmp_ppp = (double *) R_alloc(pp, sizeof(double));
-     // F77_NAME(dgemm)("N", "T", &p, &p, &p, &one, tmp_pp, &p, tmp_pp, &p, &zero, tmp_ppp, &p);
-     // Rprintf("-------------------------------------------------\n");
-     // Rprintf("\tcovariance matrix tmp_pp:"); printVec(tmp_ppp,pp);
-
-     // /************/
+     // Modifying beta_0
      //mvrnorm(&beta[t*p], tmp_p2, tmp_pp, p);
      double drawbeta0=0.0;
      double acceptbeta0=0.0;
@@ -429,23 +410,17 @@ extern "C" {
        //update B_t
        ////////////////////
        //Sigma_Beta_t
-      // Rprintf("\ttmp_pp:"); printVec(tmp_pp,pp);
-      // Rprintf("\tsigmaEta:"); printVec(sigmaEta,pp);
+
        F77_NAME(dcopy)(&pp, sigmaEta, &incOne, tmp_pp, &incOne);
-       // Rprintf("\ttmp_pp:"); printVec(tmp_pp,pp);
        if(t < (Nt-1)){
    F77_NAME(dscal)(&pp, &two, tmp_pp, &incOne);
        }
-       // Rprintf("\ttmp_pp:"); printVec(tmp_pp,pp);
 
        tmp = 1.0/theta[t*nTheta+tauSqIndx];
        F77_NAME(daxpy)(&pp, &tmp, &XX[t*pp], &incOne, tmp_pp, &incOne);
-       // Rprintf("\ttmp_pp:"); printVec(tmp_pp,pp);
 
        F77_NAME(dpotrf)(lower, &p, tmp_pp, &p, &info); if(info != 0){error("c++ error: dpotrf4 failed\n");}
        F77_NAME(dpotri)(lower, &p, tmp_pp, &p, &info); if(info != 0){error("c++ error: dpotri failed\n");}
-
-       // Rprintf("\ttmp_pp:"); printVec(tmp_pp,pp);
 
 
        //mu_Beta_t
@@ -471,9 +446,8 @@ extern "C" {
 
 
        F77_NAME(dpotrf)(lower, &p, tmp_pp, &p, &info); if(info != 0){error("c++ error: dpotrf5 failed\n");}
-       // Rprintf("\ttmp_pp:"); printVec(tmp_pp,pp);
 
-       /************/
+       /******Modifying Beta_t******/
        //mvrnorm(&beta[t*p], tmp_p2, tmp_pp, p);
 
        double *radiusbeta=REAL(radiusbeta_r);
@@ -501,7 +475,7 @@ extern "C" {
             for (int dim=0; dim<p; dim++){
               sumbeta=sumbeta+acceptmarkbeta[dim];
             }
-            //printf("%d,%d,%d\n",acceptmark[0],acceptmark[1],sum);
+            
             if (sumbeta==0 && runif(0.0,1.0)<prob){
               acceptindicator=1;
             } else if(sumbeta>0){
@@ -516,7 +490,7 @@ extern "C" {
         acceptbeta[t]=1.0;
         beta[t*p]=tempbeta[0];
         beta[t*p+1]=tempbeta[1];
-        // Rprintf("-------------------Middle------------------\n");
+
        } else {
         double *lowercurrentbeta = (double *) R_alloc(p, sizeof(double));
         double *uppercurrentbeta = (double *) R_alloc(p, sizeof(double));
@@ -533,35 +507,15 @@ extern "C" {
             int nop=2;
             double valuecurrentbeta=0.0;
             double valueproposebeta=0.0;
-            // Rprintf("-------------------------------------------------\n");
-            // Rprintf("beta %i \n", t);
-            // Rprintf("\tradius vector:"); printVec(radiusbeta,p);
-            // Rprintf("\tmean vector:"); printVec(tmp_p2,p);
-            // Rprintf("\tcholcov:"); printVec(tmp_pp,pp);
-            // Rprintf("\tproposed vector:"); printVec(tempbeta,p);
-            // Rprintf("\tproposed vector lower:"); printVec(lowerproposebeta,p);
-            // Rprintf("\tproposed vector upper:"); printVec(upperproposebeta,p);
-            // Rprintf("-------------------------------------------------\n");
-            // Rprintf("\tcurrent vector:"); printVec(beta,p);
-            // Rprintf("\tcurrent vector lower:"); printVec(lowercurrentbeta,p);
-            // Rprintf("\tcurrent vector upper:"); printVec(uppercurrentbeta,p);
 
             valueproposebeta=pmvnorm(nop,lowerproposebeta,upperproposebeta,tmp_p2,tmp_pp);
             valuecurrentbeta=pmvnorm(nop,lowercurrentbeta,uppercurrentbeta,tmp_p2,tmp_pp);
-
-
-            // Rprintf("\n proposed prob %0.5f \n", valueproposebeta);
-            // Rprintf("current prob %0.5f \n", valuecurrentbeta);
 
             double accept_prob_beta=(1-prob*valueproposebeta)/(1-valueproposebeta)*(1-valuecurrentbeta)/(1-prob*valuecurrentbeta);
             if (accept_prob_beta>=1) {
               accept_prob_beta=1;
             }
-            // Rprintf("-------------------------------------------------\n");
-            // Rprintf("determine whether or not to accept the proposed value\n");
-            // Rprintf("alpha: %f \n \n", accept_prob_beta);
             if (runif(0.0,1.0)<accept_prob_beta){
-              // Rprintf("Accepted\n");
               beta[t*p]=tempbeta[0];
               beta[t*p+1]=tempbeta[1];
               acceptbeta[t]=1.0;
@@ -584,7 +538,6 @@ extern "C" {
        }
 
        spCovLT(coordsD, n, gamma, covModel, C);
-       //printf("%d,%d,\n",C[0],C[1]);
 
        F77_NAME(dpotrf)(lower, &n, C, &n, &info); if(info != 0){error("c++ error: dpotrf6 failed\n");}
        F77_NAME(dpotri)(lower, &n, C, &n, &info); if(info != 0){error("c++ error: dpotri failed\n");}
@@ -659,35 +612,6 @@ extern "C" {
 
          /************/
         mvrnorm(&u[t*n], tmp_n2, C2, n);
-       //mvrnorm(&beta[t*p], tmp_p2, tmp_pp, p);
-       // double radius=0.0002;
-       // double *temp = (double *) R_alloc(n, sizeof(double));
-       // int *acceptmark = (int *) R_alloc(n, sizeof(int));
-       // int sum=0;
-
-       // do {
-       //  mvrnorm(temp, tmp_n2, C2, n);
-       //   for (int dim=0; dim<n; dim++){
-       //     acceptmark[dim]=0;
-       //   }
-       //    for (int dim=0; dim<n; dim++){
-       //      if (((temp[dim]-beta[t*p+dim])*(temp[dim]-beta[t*p+dim]))>(radius*radius)){
-       //        acceptmark[dim]=1;
-       //      } else {
-       //        acceptmark[dim]=0;
-       //      }
-       //      sum=0;
-       //      for (int dim=0; dim<n; dim++){
-       //        sum=sum+acceptmark[dim];
-       //      }
-       //      //printf("%d,%d,%d\n",acceptmark[0],acceptmark[1],sum);
-       //   }
-       // }while(sum==0);
-
-       // for (int i=0; i<n; i++){
-       //  u[t*n+i]=temp[i];
-       // }
-       // /************/
        }
 
        ////////////////////
@@ -699,14 +623,13 @@ extern "C" {
        //theta[t*nTheta+tauSqIndx] = 1.0/rgamma(tauSqIG[t*2]+n/2.0,
         //              1.0/(tauSqIG[t*2+1]+0.5*F77_NAME(ddot)(&n, tmp_n, &incOne, tmp_n, &incOne)));
 
-       /************/
+       /*****Modifying tau^2*******/
 
        double radiustausq=REAL(radiustausq_r)[0];
        double temptausq;
        int acceptmarktausq=0;
        drawtheta[t*nTheta+tauSqIndx] = 0.0;
 
-       //printf("%f,\n",radiustausq);
        do {
          drawtheta[t*nTheta+tauSqIndx] = drawtheta[t*nTheta+tauSqIndx] + 1.0;
          temptausq=1.0/rgamma(tauSqIG[t*2]+n/2.0,1.0/(tauSqIG[t*2+1]+0.5*F77_NAME(ddot)(&n, tmp_n, &incOne, tmp_n, &incOne)));
@@ -740,9 +663,6 @@ extern "C" {
             }
        }
 
-       //theta[t*nTheta+tauSqIndx] = temptausq;
-
-       /************/
 
 
        ////////////////////
@@ -761,17 +681,12 @@ extern "C" {
        //           1.0/(sigmaSqIG[t*2+1]+0.5*F77_NAME(ddot)(&n, tmp_n, &incOne, tmp_n2, &incOne)*theta[t*nTheta+sigmaSqIndx]));
 
 
-       /************/
+       /******Modifying sigma^2******/
 
-       //double radiussigmasq=0.0586;
-       //double radiussigmasq=0.1490;
-       //double radiussigmasq=0.2466*2;
        double radiussigmasq=REAL(radiussigmasq_r)[0];
        double tempsigmasq;
        int acceptmarksigmasq=0;
        drawtheta[t*nTheta+sigmaSqIndx] = 0.0;
-
-       //printf("%f,\n",radiussigmasq);
 
        do {
          drawtheta[t*nTheta+sigmaSqIndx] = drawtheta[t*nTheta+sigmaSqIndx] + 1.0;
@@ -805,85 +720,15 @@ extern "C" {
             }
        }
 
-       //theta[t*nTheta+sigmaSqIndx] = tempsigmasq;
 
-       /************/
 
-       ////////////////////
-       //update phi
-       ////////////////////
-       // if(t > 0){
-       //    for(i = 0; i < n; i++){
-       //      tmp_n[i] = u[n*t+i]-u[n*(t-1)+i];
-       //    }
-       // }else{
-       //    F77_NAME(dcopy)(&n, &u[n*t], &incOne, tmp_n, &incOne);
-       // }
-
-       // //current
-       // gamma[0] = theta[t*nTheta+sigmaSqIndx];
-       // gamma[1] = logitInv(theta[t*nTheta+phiIndx], phiUnif[t*2], phiUnif[t*2+1]);
-       // if(covModel == "matern"){
-       //    gamma[2] = logitInv(theta[t*nTheta+nuIndx], nuUnif[t*2], nuUnif[t*2+1]);
-       // }
-
-       // spCovLT(coordsD, n, gamma, covModel, C);
-
-       // logDet = 0;
-       // F77_NAME(dpotrf)(lower, &n, C, &n, &info); if(info != 0){error("c++ error: dpotrf12 failed\n");}
-       // for(i = 0; i < n; i++) logDet += 2*log(C[i*n+i]);
-       // F77_NAME(dpotri)(lower, &n, C, &n, &info); if(info != 0){error("c++ error: dpotri failed\n");}
-
-       // F77_NAME(dsymv)(lower, &n, &one, C, &n, tmp_n, &incOne, &zero, tmp_n2, &incOne);
-       // logPost = -0.5*logDet-0.5*F77_NAME(ddot)(&n, tmp_n, &incOne, tmp_n2, &incOne);
-
-       // logPost += log(gamma[1] - phiUnif[t*2]) + log(phiUnif[t*2+1] - gamma[1]);
-       // if(covModel == "matern"){
-       //    logPost += log(gamma[2] - nuUnif[t*2]) + log(nuUnif[t*2+1] - gamma[2]);
-       // }
-
-       // //cand
-       // gamma[0] = theta[t*nTheta+sigmaSqIndx];
-       // gamma[1] = logitInv(rnorm(theta[t*nTheta+phiIndx], phiTuning[t]), phiUnif[t*2], phiUnif[t*2+1]);
-       // if(covModel == "matern"){
-       //    gamma[2] = logitInv(rnorm(theta[t*nTheta+nuIndx], nuTuning[t]), nuUnif[t*2], nuUnif[t*2+1]);
-       // }
-
-       // spCovLT(coordsD, n, gamma, covModel, C);
-
-       // logDetCand = 0;
-       // F77_NAME(dpotrf)(lower, &n, C, &n, &info); if(info != 0){error("c++ error: dpotrf13 failed\n");}
-       // for(i = 0; i < n; i++) logDetCand += 2*log(C[i*n+i]);
-       // F77_NAME(dpotri)(lower, &n, C, &n, &info); if(info != 0){error("c++ error: dpotri failed\n");}
-
-       // F77_NAME(dsymv)(lower, &n, &one, C, &n, tmp_n, &incOne, &zero, tmp_n2, &incOne);
-       // logPostCand = -0.5*logDetCand-0.5*F77_NAME(ddot)(&n, tmp_n, &incOne, tmp_n2, &incOne);
-
-       // logPostCand += log(gamma[1] - phiUnif[t*2]) + log(phiUnif[t*2+1] - gamma[1]);
-       // if(covModel == "matern"){
-       //    logPostCand += log(gamma[2] - nuUnif[t*2]) + log(nuUnif[t*2+1] - gamma[2]);
-       // }
-
-       // logMHRatio = logPostCand - logPost;
-
-       // if(runif(0.0,1.0) <= exp(logMHRatio)){
-
-       //    theta[t*nTheta+phiIndx] = logit(gamma[1], phiUnif[t*2], phiUnif[t*2+1]);
-       //    if(covModel == "matern"){
-       //      theta[t*nTheta+nuIndx] = logit(gamma[2], nuUnif[t*2], nuUnif[t*2+1]);
-       //    }
-       //    accept++;
-       //    batchAccept++;
-       // }
-
-       /************/
+       /*****Modifying phi*******/
 
        double radiusphi=REAL(radiusphi_r)[0];
        double tempphi;
        int acceptmarkphi=0;
        drawtheta[t*nTheta+phiIndx] = 0.0;
 
-       //printf("%f,\n",radiusphi);
 
        if(t > 0){
          for(i = 0; i < n; i++){
@@ -958,25 +803,6 @@ extern "C" {
        accepttheta[t*nTheta+phiIndx] = 1.0;
 
 
-
-       // if(runif(0.0,1.0) <= exp(logMHRatio)){
-
-       // do {
-       //   tempphi = logit(gamma[1], phiUnif[t*2], phiUnif[t*2+1]);
-
-       //  if (((tempphi-theta[t*nTheta+phiIndx])*(tempphi-theta[t*nTheta+phiIndx]))>(radiussigmasq*radiussigmasq)){
-       //        acceptmarkphi=1;
-       //      } else {
-       //        acceptmarkphi=0;
-       //      }
-       // }  while(acceptmarkphi==0);
-
-       //    theta[t*nTheta+phiIndx] = 1.0/tempphi;
-       //    accept++;
-       //   batchAccept++;
-       //  }
-       /************/
-
        R_CheckUserInterrupt();
      }//end Nt
 
@@ -1007,50 +833,6 @@ extern "C" {
 
 
      rwish(tmp_pp, SigmaEtaIW_df+Nt, p, sigmaEta, tmp_pp2, 1);
-     /********************/
-     // double *tempsigmaEta = (double *) R_alloc(pp, sizeof(double));
-     // //double radiussigmaEta=171.67;
-     // //double radiussigmaEta=442.66;
-     // //double radiussigmaEta=744.82*2;
-     // double radiussigmaEta=REAL(radiussigmaEta_r)[0];
-     // int acceptmarksigmaEta=0;
-
-     // //printf("%f,\n",radiussigmaEta);
-
-     // do {
-     //  rwish(tmp_pp, SigmaEtaIW_df+Nt, p, tempsigmaEta, tmp_pp2, 1);
-     //  double sum=0;
-
-     //  for (int dim=0; dim<pp; dim++){
-     //    sum=sum+(tempsigmaEta[dim]-sigmaEta[dim])*(tempsigmaEta[dim]-sigmaEta[dim]);
-     //  }
-
-     //  acceptmarksigmaEta=0;
-     //  if (sum>(radiussigmaEta)){
-     //          acceptmarksigmaEta=1;
-     //        } else {
-     //          if (runif(0.0,1.0)<prob){
-     //            acceptmarksigmaEta=1;
-     //          } else{
-     //            acceptmarksigmaEta=0;
-     //          }
-     //        }
-     //    //printf("%d,%d\n",acceptmarksigmaEta,sum);
-     // } while(acceptmarksigmaEta==0);
-
-     // sigmaEta=tempsigmaEta;
-
-      /********************/
-
-     // F77_NAME(dpotrf)(lower, &p, tmp_pp, &p, &info); if(info != 0){error("c++ error: dpotrf failed\n");}
-     // F77_NAME(dpotri)(lower, &p, tmp_pp, &p, &info); if(info != 0){error("c++ error: dpotri failed\n");}
-
-     // for(i = 1; i < p; i++){
-     //   for(j = 0; j < i; j++){
-     //    tmp_pp[i*p+j] = tmp_pp[j*p+i];
-     //   }
-     // }
-     // riwishart(tmp_pp, SigmaEtaIW_df+Nt, p, C, C2, C3, sigmaEta);
 
      F77_NAME(dcopy)(&pp, sigmaEta, &incOne, &sigmaEtaSamples[s*pp], &incOne);
 

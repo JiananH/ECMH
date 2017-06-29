@@ -136,7 +136,6 @@ extern "C" {
     int NtnTheta = Nt*nTheta;
 
     double *beta0 = (double *) R_alloc(p, sizeof(double)); zeros(beta0, p);
-    //printf("%d,%d,\n",beta0[0],beta0[1]);
 
     double *theta = (double *) R_alloc(NtnTheta, sizeof(double));
     double *beta = (double *) R_alloc(Ntp, sizeof(double));

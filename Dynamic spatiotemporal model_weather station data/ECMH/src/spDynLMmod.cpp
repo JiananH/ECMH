@@ -256,9 +256,6 @@ extern "C" {
       F77_NAME(dpotrf)(lower, &p, tmp_pp, &p, &info); if(info != 0){error("c++ error: dpotrf2 failed\n");}
       F77_NAME(dpotri)(lower, &p, tmp_pp, &p, &info); if(info != 0){error("c++ error: dpotri failed\n");}
 
-      // Rprintf("%i th sample-------------------------------------------\n",s);
-      // Rprintf("\t covariance matrix tmp_pp:"); printVec(tmp_pp,pp);
-
       //mu_Beta0
 
       F77_NAME(dsymv)(lower, &p, &one, sigma0, &p, m0, &incOne, &zero, tmp_p, &incOne);
