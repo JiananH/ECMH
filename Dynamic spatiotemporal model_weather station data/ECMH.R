@@ -46,7 +46,7 @@ priors <- list("beta.0.Norm"=list(rep(0,p), diag(1000,p)),
 ##make symbolic model formula statement for each month
 mods <- lapply(paste(colnames(y.t),'elev',sep='~'), as.formula)
 
-n.samples <- 2
+n.samples <- 10000
 
 ##running ECMH, note that radiussigmaEta is not used
 m.1 <- spDynLMmodgone(mods, data=cbind(y.t,ne.temp[,"elev",drop=FALSE]), coords=coords,
