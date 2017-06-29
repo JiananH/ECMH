@@ -6,6 +6,6 @@ Steps to take before running the simulation for the Dynamic Spatiotemporal model
 
 	install.packages("devtools")
 	
-	devtools::install_github("JiananH/ECMH/Dynamic spatiotemporal model_weather station data/ECMH”)
+	devtools::install_github("JiananH/ECMH/Dynamic spatiotemporal model_weather station data/ECMH")
 	
 2. Run ‘Dynamic spatiotemoral model.R’
